@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <doomgeneric.h>
 #include "LGFX_SPRESENSE.hpp"
 
 #define BAUDRATE  (115200)
@@ -30,13 +31,10 @@ void setup() {
   display.drawRect(10, 60, 100, 50, TFT_RED);
   display.fillRect(120, 60, 100, 50, TFT_GREEN);
   display.drawCircle(60, 150, 30, TFT_BLUE);
+
+  doomgeneric_Create(0, NULL);
 }
 
 void loop() {
-  // 1秒ごとに uptime を表示
-  display.setCursor(10, 200);
-  display.setFont(&fonts::Font0); // 小さいフォント
-  display.printf("Uptime: %lu s", millis() / 1000);
-  
-  delay(1000);
+  doomgeneric_Tick();
 }
