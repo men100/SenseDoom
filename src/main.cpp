@@ -2,15 +2,10 @@
 #include <doomgeneric.h>
 #include "LGFX_SPRESENSE.hpp"
 
-#define BAUDRATE  (115200)
-
 // 準備したクラスのインスタンスを作成します。
 LGFX display;
 
 void setup() {
-  Serial2.begin(BAUDRATE);
-  Serial2.println("LovyanGFX for Spresense Test");
-
   // SPIバスとパネルの初期化を実行すると使用可能になります。
   display.init();
 
