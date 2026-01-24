@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "doomgeneric.h": "c",
+        "sdhci.h": "c"
+    }
+}
