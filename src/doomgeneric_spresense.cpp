@@ -1,11 +1,13 @@
 #include <doomtype.h>
 #include <doomgeneric.h>
 #include "spresense_debug.h"
+#include "spresense_sd.h"
 
 extern "C" {
 
 void DG_Init() {
   spresense_debug_init();
+  spresense_sd_init();
 }
 
 void DG_DrawFrame() {
