@@ -5,6 +5,12 @@
 // 準備したクラスのインスタンスを作成します。
 LGFX display;
 
+const char* argv[] = {
+  "sensedoom",   // argv[0]
+  "-iwad",       // argv[1]
+  "doom1.wad"    // argv[2]
+};
+
 void setup() {
   // SPIバスとパネルの初期化を実行すると使用可能になります。
   display.init();
@@ -27,7 +33,8 @@ void setup() {
   display.fillRect(120, 60, 100, 50, TFT_GREEN);
   display.drawCircle(60, 150, 30, TFT_BLUE);
 
-  doomgeneric_Create(0, NULL);
+  int argc = sizeof(argv) / sizeof(argv[0]);
+  doomgeneric_Create(argc, argv);
 }
 
 void loop() {
