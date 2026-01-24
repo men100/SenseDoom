@@ -29,5 +29,5 @@ int spresense_printf(const char *format, ...) {
     }
 
     // printf の仕様通り、文字数を返す
-    return ret;
+    return ret == 0 ? 0 : ret + 1;
 }
