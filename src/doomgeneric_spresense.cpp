@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <doomtype.h>
 #include <doomgeneric.h>
 #include "spresense_debug.h"
@@ -15,13 +16,11 @@ void DG_DrawFrame() {
 }
 
 void DG_SleepMs(uint32_t ms) {
-  (void)ms;
-  // do nothing
+  delay(ms);
 }
 
 uint32_t DG_GetTicksMs() {
-  // do nothing
-  return 0;
+  return millis();
 }
 
 int DG_GetKey(int* pressed, unsigned char* key) {
