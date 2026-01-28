@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "doomgeneric.h": "c",
-        "sdhci.h": "c"
+        "sdhci.h": "c",
+        "spresense_debug.h": "c"
     }
 }
