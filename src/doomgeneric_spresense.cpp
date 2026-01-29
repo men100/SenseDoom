@@ -128,8 +128,6 @@ int DG_GetKey(int* pressed, unsigned char* key) {
       for (int i = 0; i < 32; i++) {
           if (changed & (1UL << i)) {
               *pressed = (buttons & (1UL << i)) ? 1 : 0;
-
-              spresense_printf("i=%d, pressed=%d\n", i, *pressed);
               
               // Map to Doom Keys
               switch(i) {
