@@ -34,7 +34,26 @@ void DG_Init() {
 
 void DG_DrawFrame() {
   // USE_RGB565 により RGB565 バッファが来るので、直接入力できる
-  gfx.pushImage(0, 0, DOOMGENERIC_RESX, DOOMGENERIC_RESY, (uint16_t*)DG_ScreenBuffer);
+  gfx.pushImage(0, 40, DOOMGENERIC_RESX, DOOMGENERIC_RESY, (uint16_t*)DG_ScreenBuffer);
+
+  static uint32_t lastMillis = 0;
+  static int frameCount = 0;
+  static float fps = 0.0f;
+
+  frameCount++;
+  uint32_t currentMillis = millis();
+  if (currentMillis - lastMillis >= 1000) {
+    fps = frameCount * 1000.0f / (currentMillis - lastMillis);
+    frameCount = 0;
+    lastMillis = currentMillis;
+
+    // FPS 描画
+    gfx.fillRect(0, 0, 320, 40, TFT_BLACK); 
+    gfx.setTextColor(TFT_WHITE, TFT_BLACK);
+    gfx.setFont(&fonts::Font2); // Use a standard font
+    gfx.setCursor(0, 0);
+    gfx.printf("FPS: %.1f", fps);
+  }
 }
 
 void DG_SleepMs(uint32_t ms) {
