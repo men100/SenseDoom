@@ -1,5 +1,7 @@
 #include <arch/chip/gnssram.h>
 #include <Arduino.h>
+#include <Wire.h>
+#include <Adafruit_seesaw.h>
 #include <doomtype.h>
 #include <doomgeneric.h>
 #include "spresense_debug.h"
@@ -11,6 +13,27 @@
 pixel_t* DG_ScreenBuffer = nullptr;
 
 extern LGFX gfx;
+Adafruit_seesaw gamepad;
+bool gamepad_found = false;
+
+// Button mapping for Adafruit Gamepad QT
+#define BUTTON_A      5
+#define BUTTON_B      1
+#define BUTTON_X      6
+#define BUTTON_Y      2
+#define BUTTON_START  16
+#define BUTTON_SELECT 0
+
+// Joystick Logic
+#define JOY_ADDR       0x50
+#define JOYSTICK_X_PIN 14
+#define JOYSTICK_Y_PIN 15
+#define JOY_DEADZONE   200
+#define JOY_CENTER     512
+
+uint32_t last_buttons = 0;
+int last_joy_x = 0; // -1, 0, 1
+int last_joy_y = 0; // -1, 0, 1
 
 extern "C" {
 
@@ -29,6 +52,23 @@ void DG_Init() {
   if (DG_ScreenBuffer == nullptr) {
     spresense_printf("DG_Init: Failed to allocate screen buffer!\n");
     while(1);
+  }
+
+  // Init Gamepad
+  Wire.begin();
+  
+  if (!gamepad.begin(JOY_ADDR)) {
+    spresense_printf("Seesaw gamepad not found! Check wiring.\n");
+    gamepad_found = false;
+  } else {
+    gamepad_found = true;
+  }
+
+  if (gamepad_found) {
+      spresense_printf("Seesaw gamepad started at 0x%02X!\n", JOY_ADDR);
+      uint32_t mask = (1UL << BUTTON_A) | (1UL << BUTTON_B) | (1UL << BUTTON_X) | (1UL << BUTTON_Y) |
+                      (1UL << BUTTON_START) | (1UL << BUTTON_SELECT);
+      gamepad.pinModeBulk(mask, INPUT_PULLUP);
   }
 }
 
@@ -65,9 +105,106 @@ uint32_t DG_GetTicksMs() {
 }
 
 int DG_GetKey(int* pressed, unsigned char* key) {
-  (void)pressed;
-  (void)key;
-  // do nothing
+  if (!gamepad_found) {
+    return 0;
+  }
+
+  // 理想的には Queue などで複数入力を溜め込むのが望ましいが、
+  // シンプルに1回の読み出しで1つの変更のみを処理する
+
+  // Read Buttons
+  uint32_t buttons = gamepad.digitalReadBulk(
+    (1UL << BUTTON_A) | (1UL << BUTTON_B) | (1UL << BUTTON_X) | (1UL << BUTTON_Y) | 
+    (1UL << BUTTON_START) | (1UL << BUTTON_SELECT));
+  
+  // Invert logic (INPUT_PULLUP: 0 is pressed)
+  buttons = ~buttons; 
+
+  // Check changes
+  uint32_t changed = buttons ^ last_buttons;
+  
+  if (changed) {
+      // Find the first changed bit
+      for (int i = 0; i < 32; i++) {
+          if (changed & (1UL << i)) {
+              *pressed = (buttons & (1UL << i)) ? 1 : 0;
+
+              spresense_printf("i=%d, pressed=%d\n", i, *pressed);
+              
+              // Map to Doom Keys
+              switch(i) {
+                  case BUTTON_A:      *key = KEY_USE; break;      // A -> Use
+                  case BUTTON_B:      *key = KEY_FIRE; break;     // B -> Fire
+                  case BUTTON_X:      *key = KEY_STRAFE_R; break; // X -> Strafe Right
+                  case BUTTON_Y:      *key = KEY_STRAFE_L; break; // Y -> Strafe Left
+                  case BUTTON_START:  *key = KEY_ENTER; break;    // START -> Enter
+                  case BUTTON_SELECT: *key = KEY_TAB; break;      // SELECT -> Tab (Map)
+                  default: *key = 0; break;
+              }
+              
+              if (*key != 0) {
+                  // 他の bit は次回処理
+                  last_buttons ^= (1UL << i); 
+                  return 1; // Event generated
+              }
+          }
+      }
+      // 変更があったが 0 に map された
+      last_buttons = buttons; 
+  }
+
+  // アナログパッドの読み込み、20ms に一回
+  static uint32_t last_joy_read = 0;
+  if (millis() - last_joy_read > 20) {
+      last_joy_read = millis();
+      int x_val = gamepad.analogRead(JOYSTICK_X_PIN);
+      int y_val = gamepad.analogRead(JOYSTICK_Y_PIN);
+      
+      int new_joy_x = 0;
+      if (x_val < JOY_CENTER - JOY_DEADZONE) new_joy_x = -1; // Left
+      else if (x_val > JOY_CENTER + JOY_DEADZONE) new_joy_x = 1; // Right
+      
+      int new_joy_y = 0;
+      if (y_val < JOY_CENTER - JOY_DEADZONE) new_joy_y = 1; // Up 
+      else if (y_val > JOY_CENTER + JOY_DEADZONE) new_joy_y = -1; // Down
+      
+      // Process X change
+      if (new_joy_x != last_joy_x) {
+          if (last_joy_x != 0) {
+              // Release old direction
+              *pressed = 0;
+              *key = (last_joy_x == -1) ? KEY_RIGHTARROW : KEY_LEFTARROW; // ロジック反転 (うまく動くので)
+              last_joy_x = 0; // Intermediate state
+              return 1;
+          }
+          if (new_joy_x != 0) {
+              // Press new direction
+              *pressed = 1;
+              *key = (new_joy_x == -1) ? KEY_RIGHTARROW : KEY_LEFTARROW; // ロジック反転 (うまく動くので)
+              last_joy_x = new_joy_x;
+              return 1;
+          }
+      }
+
+      // Process Y change
+      if (new_joy_y != last_joy_y) {
+          if (last_joy_y != 0) {
+              // Release old
+              *pressed = 0;
+              *key = (last_joy_y == 1) ? KEY_UPARROW : KEY_DOWNARROW;
+              last_joy_y = 0;
+              return 1;
+          }
+          if (new_joy_y != 0) {
+              // Press new
+              *pressed = 1;
+              *key = (new_joy_y == 1) ? KEY_UPARROW : KEY_DOWNARROW;
+              last_joy_y = new_joy_y;
+              return 1;
+          }
+      }
+  }
+
   return 0;
 }
 
