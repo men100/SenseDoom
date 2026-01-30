@@ -16,7 +16,7 @@ pixel_t* DG_ScreenBuffer = nullptr;
 #define bufferArrayNum (DOOMGENERIC_RESX * DOOMGENERIC_RESY)
 static pixel_t screen_buffer_array[bufferArrayNum];
 
-extern LGFX gfx;
+LGFX gfx;
 Adafruit_seesaw gamepad;
 bool gamepad_found = false;
 
@@ -45,6 +45,10 @@ void DG_Init() {
   spresense_debug_init();
   spresense_sd_init();
   up_gnssram_initialize();
+  
+  gfx.init();
+  gfx.setBrightness(128); // バックライトの明るさ (0-255)
+  gfx.setRotation(1);     // ディスプレイの向き (0=縦, 1=横, 2=逆縦, 3=逆横)
 
   // 出力バッファは Litte Endian な一方、ILI9341 への入力は Big Endian である必要がある
   // ここで Byte Swap して、色化けしないようにする

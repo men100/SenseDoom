@@ -1,9 +1,5 @@
 #include <Arduino.h>
 #include <doomgeneric.h>
-#include "LGFX_SPRESENSE.hpp"
-
-// 準備したクラスのインスタンスを作成します。
-LGFX gfx;
 
 const char* argv[] = {
   "sensedoom",      // argv[0]
@@ -14,12 +10,6 @@ const char* argv[] = {
 };
 
 void setup() {
-  // SPIバスとパネルの初期化を実行すると使用可能になります。
-  gfx.init();
-
-  gfx.setBrightness(128); // バックライトの明るさ (0-255)
-  gfx.setRotation(1);     // ディスプレイの向き (0=縦, 1=横, 2=逆縦, 3=逆横)
-  
   int argc = sizeof(argv) / sizeof(argv[0]);
   doomgeneric_Create(argc, argv);
 }
