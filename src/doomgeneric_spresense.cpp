@@ -12,6 +12,10 @@
 // USE_RGB565 のとき、pixel_t は uint16_t
 pixel_t* DG_ScreenBuffer = nullptr;
 
+// Screen Buffer (320 x 240 x 16bit = 125KiB)
+#define bufferArrayNum (DOOMGENERIC_RESX * DOOMGENERIC_RESY)
+static pixel_t screen_buffer_array[bufferArrayNum];
+
 extern LGFX gfx;
 Adafruit_seesaw gamepad;
 bool gamepad_found = false;
@@ -46,9 +50,7 @@ void DG_Init() {
   // ここで Byte Swap して、色化けしないようにする
   gfx.setSwapBytes(true);
 
-  size_t bufferSize = DOOMGENERIC_RESX * DOOMGENERIC_RESY * sizeof(pixel_t);
-  DG_ScreenBuffer = (pixel_t*)malloc(bufferSize);
-
+  DG_ScreenBuffer = screen_buffer_array;
   if (DG_ScreenBuffer == nullptr) {
     spresense_printf("DG_Init: Failed to allocate screen buffer!\n");
     while(1);
