@@ -105,9 +105,9 @@ void DG_DrawFrame() {
     Z_GetFreeMemory(&main_free, &sec_free);
     
     gfx.setCursor(10, 5);
-    gfx.printf("Mem: %dKiB (Main) / %dKiB (GNSS)", main_free/1024, sec_free/1024);
+    gfx.printf("Mem: %dKiB (Main), %dKiB (GNSS)", main_free / 1024, sec_free / 1024);
     gfx.setCursor(10, 20);
-    gfx.printf("FPS: %.1f", fps);
+    gfx.printf("FPS: %4.1f, Time: %lus", fps, currentMillis / 1000);
   }
 }
 
