@@ -20,6 +20,8 @@ LGFX gfx;
 Adafruit_seesaw gamepad;
 bool gamepad_found = false;
 
+extern "C" void Z_GetFreeMemory(int* main_free, int* sec_free);
+
 // Button mapping for Adafruit Gamepad QT
 #define BUTTON_A      5
 #define BUTTON_B      1
@@ -97,7 +99,14 @@ void DG_DrawFrame() {
     gfx.fillRect(0, 0, 320, 40, TFT_BLACK); 
     gfx.setTextColor(TFT_WHITE, TFT_BLACK);
     gfx.setFont(&fonts::Font2); // Use a standard font
-    gfx.setCursor(0, 0);
+    
+    int main_free = 0;
+    int sec_free = 0;
+    Z_GetFreeMemory(&main_free, &sec_free);
+    
+    gfx.setCursor(10, 5);
+    gfx.printf("Mem: %dKiB (Main) / %dKiB (GNSS)", main_free/1024, sec_free/1024);
+    gfx.setCursor(10, 20);
     gfx.printf("FPS: %.1f", fps);
   }
 }
