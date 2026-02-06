@@ -17,6 +17,7 @@ pixel_t* DG_ScreenBuffer = nullptr;
 static pixel_t screen_buffer_array[bufferArrayNum];
 
 LGFX gfx;
+LGFX_Sprite status_sprite(&gfx);
 Adafruit_seesaw gamepad;
 bool gamepad_found = false;
 
@@ -51,6 +52,9 @@ void DG_Init() {
   gfx.init();
   gfx.setBrightness(128); // バックライトの明るさ (0-255)
   gfx.setRotation(1);     // ディスプレイの向き (0=縦, 1=横, 2=逆縦, 3=逆横)
+  
+  status_sprite.setColorDepth(16);
+  status_sprite.createSprite(320, 40);
 
   // 出力バッファは Litte Endian な一方、ILI9341 への入力は Big Endian である必要がある
   // ここで Byte Swap して、色化けしないようにする
@@ -96,18 +100,20 @@ void DG_DrawFrame() {
     lastMillis = currentMillis;
 
     // FPS 描画
-    gfx.fillRect(0, 0, 320, 40, TFT_BLACK); 
-    gfx.setTextColor(TFT_WHITE, TFT_BLACK);
-    gfx.setFont(&fonts::Font2); // Use a standard font
+    status_sprite.fillScreen(TFT_BLACK); 
+    status_sprite.setTextColor(TFT_WHITE, TFT_BLACK);
+    status_sprite.setFont(&fonts::Font2); // Use a standard font
     
     int main_free = 0;
     int sec_free = 0;
     Z_GetFreeMemory(&main_free, &sec_free);
     
-    gfx.setCursor(10, 5);
-    gfx.printf("Mem: %dKiB (Main), %dKiB (GNSS)", main_free / 1024, sec_free / 1024);
-    gfx.setCursor(10, 20);
-    gfx.printf("FPS: %4.1f, Time: %lus", fps, currentMillis / 1000);
+    status_sprite.setCursor(10, 5);
+    status_sprite.printf("Mem: %dKiB (Main), %dKiB (GNSS)", main_free / 1024, sec_free / 1024);
+    status_sprite.setCursor(10, 20);
+    status_sprite.printf("FPS: %4.1f, Time: %lus", fps, currentMillis / 1000);
+    
+    status_sprite.pushSprite(0, 0);
   }
 }
 
